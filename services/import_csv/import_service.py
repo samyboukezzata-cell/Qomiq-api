@@ -14,13 +14,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .column_mapper import map_columns
-from .csv_detector import CSV_TYPE_PRODUITS, CSV_TYPE_BUDGET, detect_csv_type
+from .csv_detector import CSV_TYPE_PRODUITS, CSV_TYPE_BUDGET, CSV_TYPE_CA_MENSUEL, detect_csv_type
 
 logger = logging.getLogger(__name__)
 
 _KEY_FIELDS: dict[str, list[str]] = {
-    CSV_TYPE_PRODUITS: ["nom", "ca", "ventes", "stock"],
-    CSV_TYPE_BUDGET:   ["ligne", "budget", "reel", "ecart"],
+    CSV_TYPE_PRODUITS:   ["nom", "ca", "ventes", "stock"],
+    CSV_TYPE_BUDGET:     ["ligne", "budget", "reel", "ecart"],
+    CSV_TYPE_CA_MENSUEL: ["mois", "ca_realise", "ca_objectif"],
 }
 
 

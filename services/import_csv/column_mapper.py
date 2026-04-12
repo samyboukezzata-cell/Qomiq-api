@@ -19,6 +19,19 @@ import unicodedata
 #   commun    — champs partagés (periode, etc.)
 
 SYNONYMES: dict[str, list[str]] = {
+    # ── CA Mensuel (en tête pour priorité sur periode/ca) ─────────────────────
+    "annee": [
+        "annee", "année", "year", "an",
+    ],
+    "mois": [
+        "mois", "month",
+    ],
+    "ca_realise": [
+        "ca_realise", "ca réalisé", "ca realise", "ca_réalisé",
+    ],
+    "ca_objectif": [
+        "ca_objectif", "ca_obj", "objectif_ca", "target_ca",
+    ],
     # ── Produits ──────────────────────────────────────────────────────────────
     "nom": [
         "nom", "produit", "produits", "product", "name", "libelle", "libellé",
@@ -30,7 +43,7 @@ SYNONYMES: dict[str, list[str]] = {
         "manufacturer", "supplier", "editeur", "éditeur", "constructeur",
     ],
     "ca": [
-        "ca", "ca_realise", "ca réalisé", "ca_realise", "chiffre_affaires",
+        "ca", "chiffre_affaires",
         "chiffre affaires", "chiffre d'affaires", "chiffre daffaires",
         "revenus", "revenue", "montant", "ventes_ca", "turnover",
         "ca_ht", "ca ht", "total_ca", "total ca", "recettes", "recette",
@@ -68,8 +81,8 @@ SYNONYMES: dict[str, list[str]] = {
     ],
     # ── Commun ────────────────────────────────────────────────────────────────
     "periode": [
-        "periode", "période", "period", "mois", "month", "trimestre",
-        "quarter", "annee", "année", "year", "date", "exercice",
+        "periode", "période", "period", "trimestre",
+        "quarter", "date", "exercice",
     ],
     # ── Exports Odoo Analyse Produits ─────────────────────────────────────────
     "quantite": [

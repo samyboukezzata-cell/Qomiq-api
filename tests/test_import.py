@@ -279,3 +279,35 @@ class TestTemplates:
         """Type inconnu → 404."""
         resp = client.get("/import/templates/unknown_type", headers=auth_headers)
         assert resp.status_code == 404
+
+
+# ── Services : mapping et détection ca_mensuel ───────────────────────────────
+
+class TestCaMensuelMapping:
+    CA_MENSUEL_HEADERS = ["annee", "mois", "ca_realise", "ca_objectif", "nb_commandes", "nb_nouveaux_clients"]
+
+    def test_ca_mensuel_exact_headers(self) -> None:
+        """En-têtes exacts du fichier ca_mensuel → confidence >= 0.8."""
+        from services.import_csv.import_service import confidence_score
+        from services.import_csv.column_mapper import map_columns
+        from services.import_csv.csv_detector import detect_csv_type
+
+        mapped = map_columns(self.CA_MENSUEL_HEADERS)
+        detected = detect_csv_type(self.CA_MENSUEL_HEADERS)
+        score = confidence_score(detected, mapped)
+        assert detected == "ca_mensuel", f"Type détecté : {detected}"
+        assert score >= 0.8, f"Confidence trop faible : {score}"
+
+    def test_annee_column_mapped(self) -> None:
+        """La colonne 'annee' est mappée au champ canonique 'annee'."""
+        from services.import_csv.column_mapper import map_columns
+
+        mapped = map_columns(self.CA_MENSUEL_HEADERS)
+        assert mapped.get("annee") == "annee", f"Mapping annee : {mapped.get('annee')}"
+
+    def test_ca_objectif_mapped(self) -> None:
+        """La colonne 'ca_objectif' est mappée au champ canonique 'ca_objectif'."""
+        from services.import_csv.column_mapper import map_columns
+
+        mapped = map_columns(self.CA_MENSUEL_HEADERS)
+        assert mapped.get("ca_objectif") == "ca_objectif", f"Mapping ca_objectif : {mapped.get('ca_objectif')}"
