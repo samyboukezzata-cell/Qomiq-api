@@ -17,3 +17,5 @@ services:
 databases:
   - name: qomiq-db
     plan: free
+    databaseName: qomiq
+    user: qomiq
