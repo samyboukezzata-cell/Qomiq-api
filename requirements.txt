@@ -1,0 +1,16 @@
+annotated-types==0.7.0
+anyio==4.12.1
+bcrypt==5.0.0
+chardet==5.2.0
+cryptography==46.0.7
+fastapi==0.135.1
+httpx==0.28.1
+openpyxl==3.1.5
+psycopg2-binary==2.9.11
+pydantic==2.12.5
+pydantic-settings==2.13.1
+python-jose==3.5.0
+python-multipart==0.0.26
+SQLAlchemy==2.0.48
+starlette==0.52.1
+uvicorn==0.42.0
