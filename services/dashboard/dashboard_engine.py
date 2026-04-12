@@ -68,6 +68,33 @@ def _prev_month(year: int, month: int) -> tuple[int, int]:
     return year, month - 1
 
 
+def _parse_ym(row: dict) -> tuple[int, int] | None:
+    """
+    Extrait (annee, mois) depuis un row ca_mensuel.
+
+    Supporte deux formats :
+    - "YYYY-MM" dans le champ "mois" (ex: "2026-04")
+    - champs séparés "mois" (int ou str 1-12) + "annee" (int ou str)
+    """
+    mois_raw = str(row.get("mois", "")).strip()
+    # Format "YYYY-MM"
+    if len(mois_raw) == 7 and mois_raw[4] == "-":
+        try:
+            y, m = mois_raw.split("-")
+            return int(y), int(m)
+        except (ValueError, TypeError):
+            return None
+    # Format mois seul + annee séparé
+    try:
+        m = int(mois_raw)
+        y = int(str(row.get("annee", 0)).strip())
+        if 1 <= m <= 12 and y > 0:
+            return y, m
+    except (ValueError, TypeError):
+        pass
+    return None
+
+
 def _get_attr(obj: Any, attr: str, default: Any = None) -> Any:
     """Accès uniforme dict ou objet."""
     if isinstance(obj, dict):
@@ -154,23 +181,24 @@ def compute_ca_stats(
     Returns:
         CaStats avec totaux mensuel, croissance et indicateurs d'objectif.
     """
-    ref        = _today_or(today)
-    cur_str    = f"{ref.year:04d}-{ref.month:02d}"
-    py, pm     = _prev_month(ref.year, ref.month)
-    prev_str   = f"{py:04d}-{pm:02d}"
+    ref      = _today_or(today)
+    py, pm   = _prev_month(ref.year, ref.month)
 
     current  = 0.0
     previous = 0.0
 
     for row in ca_rows:
-        mois = str(row.get("mois", ""))
+        ym = _parse_ym(row)
+        if ym is None:
+            continue
+        y, m = ym
         try:
             ca = float(row.get("ca_realise") or 0)
         except (ValueError, TypeError):
             ca = 0.0
-        if mois == cur_str:
+        if y == ref.year and m == ref.month:
             current += ca
-        elif mois == prev_str:
+        elif y == py and m == pm:
             previous += ca
 
     growth_pct: float | None = None
@@ -270,21 +298,24 @@ def compute_ca_history(
         y, m = _prev_month(y, m)
     months.reverse()   # le plus ancien en premier
 
-    # Agréger les ca_rows par mois
-    totals: dict[str, float] = {}
+    # Agréger les ca_rows par (annee, mois)
+    totals: dict[tuple[int, int], float] = {}
     for row in ca_rows:
-        mois = str(row.get("mois", ""))
+        ym = _parse_ym(row)
+        if ym is None:
+            continue
+        y, m = ym
         try:
             ca = float(row.get("ca_realise") or 0)
         except (ValueError, TypeError):
             ca = 0.0
-        totals[mois] = totals.get(mois, 0.0) + ca
+        totals[(y, m)] = totals.get((y, m), 0.0) + ca
 
     return [
         {
             "mois":       f"{yr:04d}-{mo:02d}",
             "label":      _MONTH_LABELS[mo - 1],
-            "ca_realise": totals.get(f"{yr:04d}-{mo:02d}", 0.0),
+            "ca_realise": totals.get((yr, mo), 0.0),
             "objectif":   0.0,
         }
         for yr, mo in months

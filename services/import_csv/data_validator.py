@@ -7,6 +7,7 @@ pour chaque type de données supporté.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import date
 
 # ── Champs requis par data_type ────────────────────────────────────────────────
 
@@ -25,6 +26,29 @@ _NUMERIC: dict[str, list[str]] = {
     "budget":     ["budget", "reel"],
     "contacts":   [],
 }
+
+
+def _normalize_ca_mensuel_row(row: dict) -> dict:
+    """
+    Normalise mois et annee en int pour les lignes ca_mensuel.
+
+    mois="4" → mois=4, annee="2026" → annee=2026
+    Si annee absent → year courant.
+    """
+    normalized = dict(row)
+    try:
+        normalized["mois"] = int(str(row.get("mois", "")).strip())
+    except (ValueError, TypeError):
+        pass
+    annee_raw = row.get("annee")
+    if annee_raw is not None:
+        try:
+            normalized["annee"] = int(str(annee_raw).strip())
+        except (ValueError, TypeError):
+            pass
+    else:
+        normalized["annee"] = date.today().year
+    return normalized
 
 
 @dataclass
@@ -67,6 +91,8 @@ def validate_rows(rows: list[dict], data_type: str) -> ValidationResult:
         )
 
     for row in rows:
+        if data_type == "ca_mensuel":
+            row = _normalize_ca_mensuel_row(row)
         errors: list[str] = []
 
         # Champs requis

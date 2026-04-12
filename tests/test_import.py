@@ -342,3 +342,39 @@ class TestCaMensuelMapping:
         mapped = map_columns(["mois", "ca_realise", "objectif"])
         assert mapped.get("ca_objectif") == "objectif", f"Mapping objectif→ca_objectif : {mapped.get('ca_objectif')}"
         assert mapped.get("budget") is None, f"'objectif' ne doit pas mapper vers budget : {mapped.get('budget')}"
+
+    def test_ca_mensuel_mois_string(self) -> None:
+        """mois='4' (string) est normalisé en mois=4 (int) par le validator."""
+        from services.import_csv.data_validator import validate_rows
+
+        rows = [{"mois": "4", "annee": "2026", "ca_realise": "50000"}]
+        result = validate_rows(rows, "ca_mensuel")
+        assert result.stats["valid"] == 1, f"Ligne rejetée : {result.invalid_rows}"
+        assert result.valid_rows[0]["mois"] == 4, f"mois attendu 4 (int), obtenu : {result.valid_rows[0]['mois']}"
+        assert result.valid_rows[0]["annee"] == 2026, f"annee attendu 2026 (int), obtenu : {result.valid_rows[0]['annee']}"
+
+    def test_ca_stats_with_int_mois_annee(self) -> None:
+        """compute_ca_stats reconnaît mois=4/annee=2026 (int séparés) pour avril 2026."""
+        from services.dashboard.dashboard_engine import compute_ca_stats
+        from datetime import date
+
+        rows = [
+            {"mois": 4, "annee": 2026, "ca_realise": 50000.0},
+            {"mois": 3, "annee": 2026, "ca_realise": 40000.0},
+        ]
+        stats = compute_ca_stats(rows, today=date(2026, 4, 15))
+        assert stats.current_month == 50000.0, f"CA courant : {stats.current_month}"
+        assert stats.previous_month == 40000.0, f"CA précédent : {stats.previous_month}"
+
+    def test_ca_stats_with_string_mois_annee(self) -> None:
+        """compute_ca_stats reconnaît mois='4'/annee='2026' (string séparés) pour avril 2026."""
+        from services.dashboard.dashboard_engine import compute_ca_stats
+        from datetime import date
+
+        rows = [
+            {"mois": "4", "annee": "2026", "ca_realise": 50000.0},
+            {"mois": "3", "annee": "2026", "ca_realise": 40000.0},
+        ]
+        stats = compute_ca_stats(rows, today=date(2026, 4, 15))
+        assert stats.current_month == 50000.0, f"CA courant : {stats.current_month}"
+        assert stats.previous_month == 40000.0, f"CA précédent : {stats.previous_month}"
