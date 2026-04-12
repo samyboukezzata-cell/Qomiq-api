@@ -13,9 +13,10 @@ services:
         generateValue: true
       - key: ENVIRONMENT
         value: production
+      - key: ALLOWED_ORIGINS
+        value: https://qomiq.fr,http://localhost:3000
 
 databases:
   - name: qomiq-db
-    plan: free
     databaseName: qomiq
     user: qomiq
