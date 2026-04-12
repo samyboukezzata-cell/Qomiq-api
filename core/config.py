@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
+    # CORS
+    ALLOWED_ORIGINS: str = "*"
+    ENVIRONMENT: str = "development"
+
     # App
     APP_NAME: str = "Qomiq API"
     APP_VERSION: str = "0.1.0"
