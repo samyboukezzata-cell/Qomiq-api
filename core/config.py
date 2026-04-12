@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
     # CORS
-    ALLOWED_ORIGINS: str = "*"
+    ALLOWED_ORIGINS: str = "https://qomiq.fr,http://localhost:3000,https://qomiq-web.vercel.app"
     ENVIRONMENT: str = "development"
 
     # App
