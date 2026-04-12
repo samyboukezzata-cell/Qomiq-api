@@ -311,3 +311,34 @@ class TestCaMensuelMapping:
 
         mapped = map_columns(self.CA_MENSUEL_HEADERS)
         assert mapped.get("ca_objectif") == "ca_objectif", f"Mapping ca_objectif : {mapped.get('ca_objectif')}"
+
+    def test_nb_commandes_mapped(self) -> None:
+        """La colonne 'nb_commandes' est mappée au champ canonique 'nb_commandes'."""
+        from services.import_csv.column_mapper import map_columns
+
+        mapped = map_columns(self.CA_MENSUEL_HEADERS)
+        assert mapped.get("nb_commandes") == "nb_commandes", f"Mapping nb_commandes : {mapped.get('nb_commandes')}"
+
+    def test_nb_nouveaux_clients_mapped(self) -> None:
+        """La colonne 'nb_nouveaux_clients' est mappée au champ canonique 'nb_nouveaux_clients'."""
+        from services.import_csv.column_mapper import map_columns
+
+        mapped = map_columns(self.CA_MENSUEL_HEADERS)
+        assert mapped.get("nb_nouveaux_clients") == "nb_nouveaux_clients", (
+            f"Mapping nb_nouveaux_clients : {mapped.get('nb_nouveaux_clients')}"
+        )
+
+    def test_annee_exercice_variant(self) -> None:
+        """La variante 'exercice' mappe vers le champ canonique 'annee'."""
+        from services.import_csv.column_mapper import map_columns
+
+        mapped = map_columns(["exercice", "mois", "ca_realise"])
+        assert mapped.get("annee") == "exercice", f"Mapping exercice→annee : {mapped.get('annee')}"
+
+    def test_objectif_alone_maps_to_ca_objectif(self) -> None:
+        """La colonne 'objectif' seule mappe vers 'ca_objectif' (pas 'budget')."""
+        from services.import_csv.column_mapper import map_columns
+
+        mapped = map_columns(["mois", "ca_realise", "objectif"])
+        assert mapped.get("ca_objectif") == "objectif", f"Mapping objectif→ca_objectif : {mapped.get('ca_objectif')}"
+        assert mapped.get("budget") is None, f"'objectif' ne doit pas mapper vers budget : {mapped.get('budget')}"

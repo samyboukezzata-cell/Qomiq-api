@@ -21,7 +21,7 @@ import unicodedata
 SYNONYMES: dict[str, list[str]] = {
     # ── CA Mensuel (en tête pour priorité sur periode/ca) ─────────────────────
     "annee": [
-        "annee", "année", "year", "an",
+        "annee", "année", "year", "an", "exercice",
     ],
     "mois": [
         "mois", "month",
@@ -30,7 +30,16 @@ SYNONYMES: dict[str, list[str]] = {
         "ca_realise", "ca réalisé", "ca realise", "ca_réalisé",
     ],
     "ca_objectif": [
-        "ca_objectif", "ca_obj", "objectif_ca", "target_ca",
+        "ca_objectif", "ca_obj", "objectif ca", "ca objectif",
+        "ca_cible", "target ca", "revenu cible", "objectif",
+    ],
+    "nb_commandes": [
+        "nb_commandes", "nb commandes", "nombre commandes",
+        "commandes", "orders", "nb_orders", "order_count",
+    ],
+    "nb_nouveaux_clients": [
+        "nb_nouveaux_clients", "nouveaux clients", "new clients",
+        "nb_clients", "nouveaux_clients", "new_customers",
     ],
     # ── Produits ──────────────────────────────────────────────────────────────
     "nom": [
@@ -67,7 +76,7 @@ SYNONYMES: dict[str, list[str]] = {
     ],
     "budget": [
         "budget", "budget_prevu", "budget prévu", "budget_initial",
-        "prevision", "prévision", "forecast", "objectif", "cible",
+        "prevision", "prévision", "forecast", "cible",
         "montant_budget", "montant budget",
     ],
     "reel": [
@@ -82,7 +91,7 @@ SYNONYMES: dict[str, list[str]] = {
     # ── Commun ────────────────────────────────────────────────────────────────
     "periode": [
         "periode", "période", "period", "trimestre",
-        "quarter", "date", "exercice",
+        "quarter", "date",
     ],
     # ── Exports Odoo Analyse Produits ─────────────────────────────────────────
     "quantite": [

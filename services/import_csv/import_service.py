@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 _KEY_FIELDS: dict[str, list[str]] = {
     CSV_TYPE_PRODUITS:   ["nom", "ca", "ventes", "stock"],
     CSV_TYPE_BUDGET:     ["ligne", "budget", "reel", "ecart"],
-    CSV_TYPE_CA_MENSUEL: ["mois", "ca_realise", "ca_objectif"],
+    CSV_TYPE_CA_MENSUEL: ["mois", "ca_realise", "annee", "ca_objectif", "nb_commandes", "nb_nouveaux_clients"],
 }
 
 
