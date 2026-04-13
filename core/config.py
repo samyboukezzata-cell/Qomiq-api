@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: str = "https://qomiq.fr,http://localhost:3000,https://qomiq-web.vercel.app"
     ENVIRONMENT: str = "development"
 
+    # IA
+    ANTHROPIC_API_KEY: str = ""
+
     # App
     APP_NAME: str = "Qomiq API"
     APP_VERSION: str = "0.1.0"
