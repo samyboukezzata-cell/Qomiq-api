@@ -107,16 +107,36 @@ def prompt_pestel(context: str) -> str:
 
 {context}
 
-## Format attendu :
-### Politique
-### Économique
-### Sociologique
-### Technologique
-### Environnemental
-### Légal
+## Format de réponse OBLIGATOIRE — respecte exactement ce format markdown :
 
-Pour chaque dimension : 1-2 points clés observables dans les données + impact sur le pipeline.
-Termine par **3 actions prioritaires** pour les 30 prochains jours."""
+## Analyse PESTEL
+
+| Facteur | Description | Impact | Opportunité / Menace |
+|---------|-------------|--------|----------------------|
+| 🏛️ Politique | [facteur clé 1] | Élevé/Moyen/Faible | Opportunité/Menace |
+| 🏛️ Politique | [facteur clé 2] | Élevé/Moyen/Faible | Opportunité/Menace |
+| 💰 Économique | [facteur clé 1] | Élevé/Moyen/Faible | Opportunité/Menace |
+| 💰 Économique | [facteur clé 2] | Élevé/Moyen/Faible | Opportunité/Menace |
+| 👥 Social | [facteur clé 1] | Élevé/Moyen/Faible | Opportunité/Menace |
+| 👥 Social | [facteur clé 2] | Élevé/Moyen/Faible | Opportunité/Menace |
+| 💡 Technologique | [facteur clé 1] | Élevé/Moyen/Faible | Opportunité/Menace |
+| 💡 Technologique | [facteur clé 2] | Élevé/Moyen/Faible | Opportunité/Menace |
+| 🌱 Environnemental | [facteur clé 1] | Élevé/Moyen/Faible | Opportunité/Menace |
+| 🌱 Environnemental | [facteur clé 2] | Élevé/Moyen/Faible | Opportunité/Menace |
+| ⚖️ Légal | [facteur clé 1] | Élevé/Moyen/Faible | Opportunité/Menace |
+| ⚖️ Légal | [facteur clé 2] | Élevé/Moyen/Faible | Opportunité/Menace |
+
+### 🎯 3 Recommandations prioritaires
+1. [Action concrète avec impact CA estimé]
+2. [Action concrète avec impact CA estimé]
+3. [Action concrète avec impact CA estimé]
+
+Règles strictes :
+- Remplace chaque [facteur clé] par un fait tiré des données fournies
+- Chaque cellule ne doit pas contenir de pipe | non échappé
+- Le tableau doit être du markdown valide avec les séparateurs | bien alignés
+- Chaque lettre du PESTEL doit avoir exactement 2 lignes dans le tableau
+- Les recommandations doivent citer des chiffres issus des données (CA, nombre de deals, etc.)"""
 
 
 def prompt_bcg(context: str) -> str:
