@@ -19,6 +19,7 @@ from routers import alerts
 from routers import health as health_router
 from routers import import_data
 from routers import coach
+from routers import presentation
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +76,7 @@ app.include_router(alerts.router)
 app.include_router(health_router.router)
 app.include_router(import_data.router)
 app.include_router(coach.router)
+app.include_router(presentation.router)
 
 
 # ── Health checks ─────────────────────────────────────────────────────────────
