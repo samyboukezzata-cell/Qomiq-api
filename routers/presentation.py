@@ -149,12 +149,20 @@ def export_pdf(
 # ── Génération PDF (ReportLab) ────────────────────────────────────────────────
 
 _EMOJI_RE = re.compile(
-    "[\U00010000-\U0010ffff]|[\U0001F300-\U0001F9FF]|[^\x00-\x7F]",
+    "["
+    "\U0001F600-\U0001F64F"
+    "\U0001F300-\U0001F5FF"
+    "\U0001F680-\U0001F6FF"
+    "\U0001F1E0-\U0001F1FF"
+    "\U0001F900-\U0001F9FF"
+    "\U00010000-\U0010FFFF"
+    "]+",
     flags=re.UNICODE,
 )
 
+
 def _clean_for_pdf(text: str) -> str:
-    """Supprime les emojis et caractères non-ASCII non supportés par Helvetica."""
+    """Supprime les emojis avant insertion dans ReportLab (garde les accents français)."""
     return _EMOJI_RE.sub("", text)
 
 

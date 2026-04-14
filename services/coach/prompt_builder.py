@@ -113,20 +113,20 @@ def prompt_pestel(context: str) -> str:
 
 | Facteur | Description | Impact | Opportunité / Menace |
 |---------|-------------|--------|----------------------|
-| 🏛️ Politique | [facteur clé 1] | Élevé/Moyen/Faible | Opportunité/Menace |
-| 🏛️ Politique | [facteur clé 2] | Élevé/Moyen/Faible | Opportunité/Menace |
-| 💰 Économique | [facteur clé 1] | Élevé/Moyen/Faible | Opportunité/Menace |
-| 💰 Économique | [facteur clé 2] | Élevé/Moyen/Faible | Opportunité/Menace |
-| 👥 Social | [facteur clé 1] | Élevé/Moyen/Faible | Opportunité/Menace |
-| 👥 Social | [facteur clé 2] | Élevé/Moyen/Faible | Opportunité/Menace |
-| 💡 Technologique | [facteur clé 1] | Élevé/Moyen/Faible | Opportunité/Menace |
-| 💡 Technologique | [facteur clé 2] | Élevé/Moyen/Faible | Opportunité/Menace |
-| 🌱 Environnemental | [facteur clé 1] | Élevé/Moyen/Faible | Opportunité/Menace |
-| 🌱 Environnemental | [facteur clé 2] | Élevé/Moyen/Faible | Opportunité/Menace |
-| ⚖️ Légal | [facteur clé 1] | Élevé/Moyen/Faible | Opportunité/Menace |
-| ⚖️ Légal | [facteur clé 2] | Élevé/Moyen/Faible | Opportunité/Menace |
+| Politique | [facteur clé 1] | Élevé/Moyen/Faible | Opportunité/Menace |
+| Politique | [facteur clé 2] | Élevé/Moyen/Faible | Opportunité/Menace |
+| Économique | [facteur clé 1] | Élevé/Moyen/Faible | Opportunité/Menace |
+| Économique | [facteur clé 2] | Élevé/Moyen/Faible | Opportunité/Menace |
+| Social | [facteur clé 1] | Élevé/Moyen/Faible | Opportunité/Menace |
+| Social | [facteur clé 2] | Élevé/Moyen/Faible | Opportunité/Menace |
+| Technologique | [facteur clé 1] | Élevé/Moyen/Faible | Opportunité/Menace |
+| Technologique | [facteur clé 2] | Élevé/Moyen/Faible | Opportunité/Menace |
+| Environnemental | [facteur clé 1] | Élevé/Moyen/Faible | Opportunité/Menace |
+| Environnemental | [facteur clé 2] | Élevé/Moyen/Faible | Opportunité/Menace |
+| Légal | [facteur clé 1] | Élevé/Moyen/Faible | Opportunité/Menace |
+| Légal | [facteur clé 2] | Élevé/Moyen/Faible | Opportunité/Menace |
 
-### 🎯 3 Recommandations prioritaires
+### 3 Recommandations prioritaires
 1. [Action concrète avec impact CA estimé]
 2. [Action concrète avec impact CA estimé]
 3. [Action concrète avec impact CA estimé]
@@ -145,13 +145,13 @@ def prompt_bcg(context: str) -> str:
 {context}
 
 ## Format attendu :
-### Étoiles (forte croissance, forte part de marché)
+### Stars (forte croissance, forte part de marché)
 ### Vaches à lait (faible croissance, forte part de marché)
 ### Dilemmes (forte croissance, faible part de marché)
 ### Poids morts (faible croissance, faible part de marché)
 
 Pour chaque quadrant : liste les produits/segments concernés avec justification chiffrée.
-Termine par **3 recommandations d'allocation des ressources**."""
+Termine par **3 Recommandations prioritaires d'allocation des ressources**."""
 
 
 def prompt_ansoff(context: str) -> str:
@@ -160,10 +160,10 @@ def prompt_ansoff(context: str) -> str:
 {context}
 
 ## Format attendu :
-### Pénétration de marché (produits existants × marchés existants)
-### Développement de produits (nouveaux produits × marchés existants)
-### Développement de marchés (produits existants × nouveaux marchés)
-### Diversification (nouveaux produits × nouveaux marchés)
+### Pénétration de marché (produits existants, marchés existants)
+### Développement de produits (nouveaux produits, marchés existants)
+### Développement de marchés (produits existants, nouveaux marchés)
+### Diversification (nouveaux produits, nouveaux marchés)
 
 Pour chaque quadrant : opportunités identifiées dans les données + niveau de risque.
 Termine par **la stratégie recommandée** avec justification chiffrée."""
