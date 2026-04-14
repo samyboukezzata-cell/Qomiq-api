@@ -1,5 +1,5 @@
 """
-Qomiq API — Router Coach IA.
+Qomiq API — Router Coach IA (Groq / Llama-3.3-70b).
 
 Endpoints :
   POST /coach/analyze  — analyse structurée (PESTEL / BCG / Ansoff / Porter)
@@ -9,6 +9,7 @@ Endpoints :
 from __future__ import annotations
 
 import logging
+from datetime import date
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -36,8 +37,8 @@ router = APIRouter(prefix="/coach", tags=["coach"])
 
 _HISTORY_TYPE = "coach_history"
 _MAX_HISTORY  = 10
-_MODEL        = "claude-3-5-haiku-20241022"
-_MAX_TOKENS   = 2048
+_MODEL        = "llama-3.3-70b-versatile"
+_MAX_TOKENS   = 2000
 
 AnalysisType = Literal["pestel", "bcg", "ansoff", "porter"]
 
@@ -65,25 +66,37 @@ class ChatRequest(BaseModel):
     history: list[ChatMessage] = []
 
 
-# ── Helper : client Anthropic ─────────────────────────────────────────────────
+# ── Helper : client Groq ──────────────────────────────────────────────────────
 
 def _get_client():
-    """Retourne un client Anthropic. Lève 500 si la clé est absente."""
-    api_key = settings.ANTHROPIC_API_KEY
+    """Retourne un client Groq. Lève 500 si la clé est absente."""
+    api_key = settings.GROQ_API_KEY
     if not api_key:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="ANTHROPIC_API_KEY non configurée. "
+            detail="GROQ_API_KEY non configurée. "
                    "Ajoutez la variable d'environnement dans Render.",
         )
     try:
-        import anthropic
-        return anthropic.Anthropic(api_key=api_key)
+        from groq import Groq
+        return Groq(api_key=api_key)
     except ImportError:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Bibliothèque 'anthropic' non installée.",
+            detail="Bibliothèque 'groq' non installée.",
         )
+
+
+def _call_llm(messages: list[dict]) -> str:
+    """Appelle Groq et retourne le texte de la réponse."""
+    client = _get_client()
+    response = client.chat.completions.create(
+        model=_MODEL,
+        messages=messages,
+        max_tokens=_MAX_TOKENS,
+        temperature=0.7,
+    )
+    return response.choices[0].message.content
 
 
 def _load_context(db: Session, user_id: int) -> str:
@@ -92,8 +105,7 @@ def _load_context(db: Session, user_id: int) -> str:
     budget   = get_user_data(db, user_id, "budget")
     produits = get_user_data(db, user_id, "produits")
 
-    # Score de santé depuis l'historique (dernier point)
-    health_hist = get_user_data(db, user_id, "health_history")
+    health_hist  = get_user_data(db, user_id, "health_history")
     health_score = health_hist[-1].get("score") if health_hist else None
 
     return build_context(pipeline, ca_rows, budget, produits, health_score)
@@ -111,30 +123,29 @@ def coach_analyze(
     Génère une analyse structurée (PESTEL / BCG / Ansoff / Porter)
     à partir des données UserData de l'utilisateur.
     """
-    client  = _get_client()
     context = _load_context(db, current_user.id)
 
     build_prompt = _PROMPT_MAP[body.analysis_type]
     user_prompt  = build_prompt(context)
 
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user",   "content": user_prompt},
+    ]
+
     try:
-        response = client.messages.create(
-            model=_MODEL,
-            max_tokens=_MAX_TOKENS,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_prompt}],
-        )
-        content = response.content[0].text
+        content = _call_llm(messages)
+    except HTTPException:
+        raise
     except Exception as exc:
-        logger.exception("Erreur appel Anthropic /analyze")
+        logger.exception("Erreur appel Groq /analyze")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Erreur API Anthropic : {exc}",
+            detail=f"Erreur API Groq : {exc}",
         )
 
     # Persistance dans l'historique
     history = get_user_data(db, current_user.id, _HISTORY_TYPE)
-    from datetime import date
     history.append({
         "type":       body.analysis_type,
         "content":    content,
@@ -163,25 +174,23 @@ def coach_chat(
     Conversation libre avec le Coach IA.
     Le contexte des données utilisateur est injecté automatiquement.
     """
-    client  = _get_client()
     context = _load_context(db, current_user.id)
 
     history = [{"role": m.role, "content": m.content} for m in body.history]
-    messages = prompt_chat(context, body.message, history)
+    chat_messages = prompt_chat(context, body.message, history)
+
+    # Ajouter le system prompt en tête
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}] + chat_messages
 
     try:
-        response = client.messages.create(
-            model=_MODEL,
-            max_tokens=_MAX_TOKENS,
-            system=SYSTEM_PROMPT,
-            messages=messages,
-        )
-        reply = response.content[0].text
+        reply = _call_llm(messages)
+    except HTTPException:
+        raise
     except Exception as exc:
-        logger.exception("Erreur appel Anthropic /chat")
+        logger.exception("Erreur appel Groq /chat")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Erreur API Anthropic : {exc}",
+            detail=f"Erreur API Groq : {exc}",
         )
 
     return {"role": "assistant", "content": reply, "model": _MODEL}

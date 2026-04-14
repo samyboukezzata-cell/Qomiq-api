@@ -1,7 +1,7 @@
 """
 Tests — /coach/ (analyze, chat, history).
 
-Les appels Anthropic sont mockés : aucun vrai appel API.
+Les appels Groq sont mockés : aucun vrai appel API.
 """
 from __future__ import annotations
 
@@ -13,16 +13,19 @@ from fastapi.testclient import TestClient
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _mock_anthropic_response(text: str = "## Analyse\nContenu de l'analyse mock."):
-    """Retourne un mock qui imite anthropic.Anthropic().messages.create()."""
-    content_block = MagicMock()
-    content_block.text = text
-
+def _mock_groq_response(text: str = "## Analyse\nContenu de l'analyse mock."):
+    """Retourne un mock qui imite groq.Groq().chat.completions.create()."""
     message = MagicMock()
-    message.content = [content_block]
+    message.content = text
+
+    choice = MagicMock()
+    choice.message = message
+
+    response = MagicMock()
+    response.choices = [choice]
 
     client_mock = MagicMock()
-    client_mock.messages.create.return_value = message
+    client_mock.chat.completions.create.return_value = response
 
     return client_mock
 
@@ -38,25 +41,23 @@ class TestCoachAnalyze:
     def test_analyze_without_api_key(
         self, client: TestClient, auth_headers: dict
     ) -> None:
-        """Clé Anthropic absente → 500 avec message explicite."""
-        with patch("core.config.settings") as mock_settings:
-            mock_settings.ANTHROPIC_API_KEY = ""
+        """Clé Groq absente → 500 avec message explicite."""
+        with patch("routers.coach.settings") as mock_settings:
+            mock_settings.GROQ_API_KEY = ""
             resp = client.post(
                 "/coach/analyze",
                 headers=auth_headers,
                 json={"analysis_type": "pestel"},
             )
         assert resp.status_code == 500
-        assert "ANTHROPIC_API_KEY" in resp.json()["detail"]
+        assert "GROQ_API_KEY" in resp.json()["detail"]
 
     def test_analyze_pestel_structure(
         self, client: TestClient, auth_headers: dict
     ) -> None:
         """Analyse PESTEL → 200 avec content et analysis_type."""
-        anthropic_mock = _mock_anthropic_response("## PESTEL\n### Politique\nTest.")
-        with patch("routers.coach.settings") as mock_settings, \
-             patch("routers.coach._get_client", return_value=anthropic_mock):
-            mock_settings.ANTHROPIC_API_KEY = "sk-ant-test"
+        groq_mock = _mock_groq_response("## PESTEL\n### Politique\nTest.")
+        with patch("routers.coach._get_client", return_value=groq_mock):
             resp = client.post(
                 "/coach/analyze",
                 headers=auth_headers,
@@ -73,8 +74,8 @@ class TestCoachAnalyze:
     ) -> None:
         """Les 4 types d'analyse répondent 200."""
         for atype in ("pestel", "bcg", "ansoff", "porter"):
-            anthropic_mock = _mock_anthropic_response(f"## {atype.upper()}\nMock.")
-            with patch("routers.coach._get_client", return_value=anthropic_mock):
+            groq_mock = _mock_groq_response(f"## {atype.upper()}\nMock.")
+            with patch("routers.coach._get_client", return_value=groq_mock):
                 resp = client.post(
                     "/coach/analyze",
                     headers=auth_headers,
@@ -98,8 +99,8 @@ class TestCoachAnalyze:
         self, client: TestClient, auth_headers: dict
     ) -> None:
         """Après analyze → history contient l'entrée."""
-        anthropic_mock = _mock_anthropic_response("## BCG\nMock analyse.")
-        with patch("routers.coach._get_client", return_value=anthropic_mock):
+        groq_mock = _mock_groq_response("## BCG\nMock analyse.")
+        with patch("routers.coach._get_client", return_value=groq_mock):
             client.post(
                 "/coach/analyze",
                 headers=auth_headers,
@@ -125,8 +126,8 @@ class TestCoachChat:
         self, client: TestClient, auth_headers: dict
     ) -> None:
         """Message simple → 200 avec role assistant et content."""
-        anthropic_mock = _mock_anthropic_response("Bonjour ! Comment puis-je vous aider ?")
-        with patch("routers.coach._get_client", return_value=anthropic_mock):
+        groq_mock = _mock_groq_response("Bonjour ! Comment puis-je vous aider ?")
+        with patch("routers.coach._get_client", return_value=groq_mock):
             resp = client.post(
                 "/coach/chat",
                 headers=auth_headers,
@@ -141,8 +142,8 @@ class TestCoachChat:
         self, client: TestClient, auth_headers: dict
     ) -> None:
         """Chat avec historique → passe les messages précédents à l'API."""
-        anthropic_mock = _mock_anthropic_response("Suite de la conversation.")
-        with patch("routers.coach._get_client", return_value=anthropic_mock):
+        groq_mock = _mock_groq_response("Suite de la conversation.")
+        with patch("routers.coach._get_client", return_value=groq_mock):
             resp = client.post(
                 "/coach/chat",
                 headers=auth_headers,
@@ -155,12 +156,11 @@ class TestCoachChat:
                 },
             )
         assert resp.status_code == 200
-        # Vérifier que l'historique a bien été passé
-        call_args = anthropic_mock.messages.create.call_args
-        messages_sent = call_args.kwargs.get("messages") or call_args.args[0] if call_args.args else []
-        if call_args.kwargs:
-            messages_sent = call_args.kwargs.get("messages", [])
-        assert len(messages_sent) >= 3  # historique + nouveau message
+        # Vérifier que l'historique a bien été transmis à Groq
+        call_args = groq_mock.chat.completions.create.call_args
+        messages_sent = call_args.kwargs.get("messages", [])
+        # system + 2 historique + nouveau message = 4 minimum
+        assert len(messages_sent) >= 4
 
 
 # ── /coach/history ────────────────────────────────────────────────────────────
@@ -183,8 +183,8 @@ class TestCoachHistory:
         self, client: TestClient, auth_headers: dict
     ) -> None:
         """L'historique est limité à 10 entrées (FIFO)."""
-        anthropic_mock = _mock_anthropic_response("Mock.")
-        with patch("routers.coach._get_client", return_value=anthropic_mock):
+        groq_mock = _mock_groq_response("Mock.")
+        with patch("routers.coach._get_client", return_value=groq_mock):
             for _ in range(12):
                 client.post(
                     "/coach/analyze",

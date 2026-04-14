@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
 
     # IA
-    ANTHROPIC_API_KEY: str = ""
+    GROQ_API_KEY: str = ""
 
     # App
     APP_NAME: str = "Qomiq API"
