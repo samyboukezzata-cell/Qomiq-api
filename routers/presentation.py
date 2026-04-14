@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import io
 import logging
+import re
 from datetime import date
 
 from fastapi import APIRouter, Depends
@@ -146,6 +147,16 @@ def export_pdf(
 
 
 # ── Génération PDF (ReportLab) ────────────────────────────────────────────────
+
+_EMOJI_RE = re.compile(
+    "[\U00010000-\U0010ffff]|[\U0001F300-\U0001F9FF]|[^\x00-\x7F]",
+    flags=re.UNICODE,
+)
+
+def _clean_for_pdf(text: str) -> str:
+    """Supprime les emojis et caractères non-ASCII non supportés par Helvetica."""
+    return _EMOJI_RE.sub("", text)
+
 
 def _build_pdf(data: PdfRequest) -> bytes:
     from reportlab.lib import colors
@@ -345,7 +356,9 @@ def _build_pdf(data: PdfRequest) -> bytes:
         story.append(PageBreak())
         story += section_header("ANALYSE STRATÉGIQUE (Coach IA)")
         # Tronquer le markdown à 3000 chars pour le PDF, texte brut
-        analysis_text = data.last_analysis[:3000].replace("**", "").replace("##", "").replace("#", "")
+        analysis_text = _clean_for_pdf(
+            data.last_analysis[:3000].replace("**", "").replace("##", "").replace("#", "")
+        )
         for line in analysis_text.split("\n"):
             stripped = line.strip()
             if stripped:
