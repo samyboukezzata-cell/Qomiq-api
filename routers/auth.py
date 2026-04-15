@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from core.database import get_db
 from core.security import create_access_token, decode_access_token, hash_password, verify_password
-from models.schemas import Token, UserCreate, UserLogin, UserResponse
+from models.schemas import Token, UserCreate, UserLogin, UserResponse, ProfileUpdate, PasswordChange
 from models.user import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -110,3 +110,48 @@ def login(body: UserLogin, db: Session = Depends(get_db)) -> dict:
 )
 def me(current_user: User = Depends(get_current_user)) -> User:
     return current_user
+
+
+@router.put(
+    "/me",
+    response_model=UserResponse,
+    summary="Mettre à jour le profil",
+)
+def update_profile(
+    body: ProfileUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> User:
+    if body.nom is not None:
+        current_user.nom = body.nom
+    if body.prenom is not None:
+        current_user.prenom = body.prenom
+    if body.secteur is not None:
+        current_user.secteur = body.secteur
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.put(
+    "/password",
+    summary="Changer le mot de passe",
+)
+def change_password(
+    body: PasswordChange,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    if not verify_password(body.current_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Mot de passe actuel incorrect.",
+        )
+    if body.new_password != body.confirm_password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Les mots de passe ne correspondent pas.",
+        )
+    current_user.hashed_password = hash_password(body.new_password)
+    db.commit()
+    return {"message": "Mot de passe mis à jour"}

@@ -189,6 +189,111 @@ class TestSecurity:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# PUT /auth/me
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TestUpdateProfile:
+    def test_update_profile_success(
+        self, client: TestClient, auth_headers: dict
+    ) -> None:
+        """Mise à jour valide → 200 + données retournées."""
+        resp = client.put("/auth/me", headers=auth_headers, json={
+            "nom": "Dupont",
+            "prenom": "Marie",
+            "secteur": "Tech / SaaS",
+        })
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["nom"] == "Dupont"
+        assert data["prenom"] == "Marie"
+        assert data["secteur"] == "Tech / SaaS"
+
+    def test_update_profile_partial(
+        self, client: TestClient, auth_headers: dict
+    ) -> None:
+        """Mise à jour partielle → seul le champ fourni est modifié."""
+        client.put("/auth/me", headers=auth_headers, json={"nom": "Martin"})
+        resp = client.put("/auth/me", headers=auth_headers, json={"prenom": "Jean"})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["nom"] == "Martin"
+        assert data["prenom"] == "Jean"
+
+    def test_update_profile_requires_auth(self, client: TestClient) -> None:
+        """Sans token → 401."""
+        resp = client.put("/auth/me", json={"nom": "Test"})
+        assert resp.status_code == 401
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PUT /auth/password
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TestChangePassword:
+    def test_change_password_success(
+        self, client: TestClient, auth_headers: dict, registered_user: dict
+    ) -> None:
+        """Changement valide → 200 + login possible avec le nouveau mot de passe."""
+        resp = client.put("/auth/password", headers=auth_headers, json={
+            "current_password": registered_user["password"],
+            "new_password": "NewSecurePass1",
+            "confirm_password": "NewSecurePass1",
+        })
+        assert resp.status_code == 200
+        assert resp.json()["message"] == "Mot de passe mis à jour"
+        # Vérifie que le nouveau mot de passe fonctionne
+        login = client.post("/auth/login", json={
+            "email": registered_user["email"],
+            "password": "NewSecurePass1",
+        })
+        assert login.status_code == 200
+
+    def test_change_password_wrong_current(
+        self, client: TestClient, auth_headers: dict
+    ) -> None:
+        """Mauvais mot de passe actuel → 400."""
+        resp = client.put("/auth/password", headers=auth_headers, json={
+            "current_password": "WrongPassword1",
+            "new_password": "NewSecurePass1",
+            "confirm_password": "NewSecurePass1",
+        })
+        assert resp.status_code == 400
+        assert "incorrect" in resp.json()["detail"].lower()
+
+    def test_change_password_mismatch(
+        self, client: TestClient, auth_headers: dict, registered_user: dict
+    ) -> None:
+        """new_password != confirm_password → 400."""
+        resp = client.put("/auth/password", headers=auth_headers, json={
+            "current_password": registered_user["password"],
+            "new_password": "NewSecurePass1",
+            "confirm_password": "DifferentPass1",
+        })
+        assert resp.status_code == 400
+        assert "correspondent" in resp.json()["detail"]
+
+    def test_change_password_too_short(
+        self, client: TestClient, auth_headers: dict, registered_user: dict
+    ) -> None:
+        """Nouveau mot de passe < 8 caractères → 422."""
+        resp = client.put("/auth/password", headers=auth_headers, json={
+            "current_password": registered_user["password"],
+            "new_password": "abc",
+            "confirm_password": "abc",
+        })
+        assert resp.status_code == 422
+
+    def test_change_password_requires_auth(self, client: TestClient) -> None:
+        """Sans token → 401."""
+        resp = client.put("/auth/password", json={
+            "current_password": "any",
+            "new_password": "NewPass123",
+            "confirm_password": "NewPass123",
+        })
+        assert resp.status_code == 401
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Health checks
 # ══════════════════════════════════════════════════════════════════════════════
 

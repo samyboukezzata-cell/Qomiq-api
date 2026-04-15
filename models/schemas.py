@@ -47,8 +47,32 @@ class UserResponse(BaseModel):
     id: int
     email: str
     full_name: Optional[str]
+    nom: Optional[str] = None
+    prenom: Optional[str] = None
+    secteur: Optional[str] = None
     is_active: bool
     is_admin: bool
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class ProfileUpdate(BaseModel):
+    """Corps de la requête PUT /auth/me."""
+    nom: Optional[str] = None
+    prenom: Optional[str] = None
+    secteur: Optional[str] = None
+
+
+class PasswordChange(BaseModel):
+    """Corps de la requête PUT /auth/password."""
+    current_password: str
+    new_password: str
+    confirm_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def new_password_min_length(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError("Le nouveau mot de passe doit contenir au moins 8 caractères.")
+        return v
