@@ -11,7 +11,10 @@ from sqlalchemy.orm import Session
 
 from core.database import get_db
 from core.security import create_access_token, decode_access_token, hash_password, verify_password
-from models.schemas import Token, UserCreate, UserLogin, UserResponse, ProfileUpdate, PasswordChange
+from models.schemas import (
+    Token, UserCreate, UserLogin, UserResponse,
+    ProfileUpdate, PasswordChange, HasData, UserMeResponse,
+)
 from models.user import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -105,10 +108,54 @@ def login(body: UserLogin, db: Session = Depends(get_db)) -> dict:
 
 @router.get(
     "/me",
-    response_model=UserResponse,
+    response_model=UserMeResponse,
     summary="Profil de l'utilisateur connecté",
 )
-def me(current_user: User = Depends(get_current_user)) -> User:
+def me(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> UserMeResponse:
+    from models.user_data import get_user_data
+    pipeline_rows  = get_user_data(db, current_user.id, "pipeline")
+    ca_rows        = get_user_data(db, current_user.id, "ca_mensuel")
+    coach_history  = get_user_data(db, current_user.id, "coach_history")
+    has_data = HasData(
+        pipeline=len(pipeline_rows) > 0,
+        ca_mensuel=len(ca_rows) > 0,
+        has_generated_analysis=len(coach_history) > 0,
+    )
+    return UserMeResponse.model_validate(
+        {**current_user.__dict__, "has_data": has_data}
+    )
+
+
+@router.post(
+    "/complete-onboarding",
+    response_model=UserResponse,
+    summary="Marquer l'onboarding comme terminé",
+)
+def complete_onboarding(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> User:
+    current_user.onboarding_completed = True
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.post(
+    "/reset-onboarding",
+    response_model=UserResponse,
+    summary="Réinitialiser l'onboarding (relancer le guide)",
+)
+def reset_onboarding(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> User:
+    current_user.onboarding_completed = False
+    db.commit()
+    db.refresh(current_user)
     return current_user
 
 

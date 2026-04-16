@@ -294,6 +294,56 @@ class TestChangePassword:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# Onboarding
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TestOnboarding:
+    def test_onboarding_default_false(
+        self, client: TestClient, auth_headers: dict
+    ) -> None:
+        """Nouvel utilisateur → onboarding_completed = False."""
+        resp = client.get("/auth/me", headers=auth_headers)
+        assert resp.status_code == 200
+        assert resp.json()["onboarding_completed"] is False
+
+    def test_me_returns_has_data(
+        self, client: TestClient, auth_headers: dict
+    ) -> None:
+        """GET /auth/me contient la structure has_data."""
+        resp = client.get("/auth/me", headers=auth_headers)
+        assert resp.status_code == 200
+        has_data = resp.json().get("has_data")
+        assert has_data is not None
+        assert "pipeline" in has_data
+        assert "ca_mensuel" in has_data
+        assert "has_generated_analysis" in has_data
+        # Aucune donnée importée → tout False
+        assert has_data["pipeline"] is False
+        assert has_data["ca_mensuel"] is False
+        assert has_data["has_generated_analysis"] is False
+
+    def test_complete_onboarding(
+        self, client: TestClient, auth_headers: dict
+    ) -> None:
+        """POST /auth/complete-onboarding → 200 + onboarding_completed = True."""
+        resp = client.post("/auth/complete-onboarding", headers=auth_headers)
+        assert resp.status_code == 200
+        assert resp.json()["onboarding_completed"] is True
+        # Vérification via /me
+        me = client.get("/auth/me", headers=auth_headers)
+        assert me.json()["onboarding_completed"] is True
+
+    def test_reset_onboarding(
+        self, client: TestClient, auth_headers: dict
+    ) -> None:
+        """POST /auth/reset-onboarding → onboarding_completed revient à False."""
+        client.post("/auth/complete-onboarding", headers=auth_headers)
+        resp = client.post("/auth/reset-onboarding", headers=auth_headers)
+        assert resp.status_code == 200
+        assert resp.json()["onboarding_completed"] is False
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Health checks
 # ══════════════════════════════════════════════════════════════════════════════
 

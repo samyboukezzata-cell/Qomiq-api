@@ -53,7 +53,8 @@ async def lifespan(app: FastAPI):
                 ALTER TABLE users
                 ADD COLUMN IF NOT EXISTS nom VARCHAR,
                 ADD COLUMN IF NOT EXISTS prenom VARCHAR,
-                ADD COLUMN IF NOT EXISTS secteur VARCHAR;
+                ADD COLUMN IF NOT EXISTS secteur VARCHAR,
+                ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT FALSE;
             """))
             conn.commit()
         print("Migration colonnes users OK")

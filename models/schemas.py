@@ -50,11 +50,24 @@ class UserResponse(BaseModel):
     nom: Optional[str] = None
     prenom: Optional[str] = None
     secteur: Optional[str] = None
+    onboarding_completed: bool = False
     is_active: bool
     is_admin: bool
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class HasData(BaseModel):
+    """État des données importées par l'utilisateur."""
+    pipeline: bool
+    ca_mensuel: bool
+    has_generated_analysis: bool
+
+
+class UserMeResponse(UserResponse):
+    """Réponse enrichie de GET /auth/me (avec has_data calculé)."""
+    has_data: HasData
 
 
 class ProfileUpdate(BaseModel):
