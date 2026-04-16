@@ -36,7 +36,7 @@ if settings.SECRET_KEY == "change-me-in-production" and settings.ENVIRONMENT == 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Crée les tables au démarrage (idempotent)."""
+    """Crée les tables au démarrage et applique les migrations colonnes."""
     try:
         from models import user, user_data  # noqa: F401 — enregistre les modèles
         Base.metadata.create_all(bind=engine)
@@ -44,6 +44,23 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"Database error at startup: {e}")
         raise
+
+    # ── Migration colonnes users (idempotent via IF NOT EXISTS) ───────────────
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            conn.execute(text("""
+                ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS nom VARCHAR,
+                ADD COLUMN IF NOT EXISTS prenom VARCHAR,
+                ADD COLUMN IF NOT EXISTS secteur VARCHAR;
+            """))
+            conn.commit()
+        print("Migration colonnes users OK")
+    except Exception as e:
+        # Non-bloquant : SQLite (dev/tests) ne supporte pas IF NOT EXISTS
+        print(f"Migration warning (ignoré en dev/test): {e}")
+
     yield
 
 
